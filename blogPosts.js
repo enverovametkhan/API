@@ -6,6 +6,7 @@ const blogPosts = [
     views: 4,
     likes: 2,
     category: "Category1",
+    userId: "user1",
   },
   {
     _id: "112",
@@ -14,6 +15,7 @@ const blogPosts = [
     views: 5,
     likes: 3,
     category: "Category2",
+    userId: "user2",
   },
 ];
 
@@ -25,4 +27,14 @@ function getBlogPostsByCategory(category) {
   return blogPosts.filter((post) => post.category === category);
 }
 
-module.exports = { getBlogPostById, getBlogPostsByCategory };
+function getBlogPostsByCategoryAndUserId(category, userId) {
+  return blogPosts.filter(
+    (post) => post.category === category && post.userId === userId
+  );
+}
+
+module.exports = {
+  getBlogPostById,
+  getBlogPostsByCategory,
+  getBlogPostsByCategoryAndUserId,
+};
