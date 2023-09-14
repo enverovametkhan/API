@@ -1,14 +1,10 @@
-const {
-  createBlogPost,
-  deleteBlogPost,
-  updateBlogPost,
-} = require("./blogPosts");
+const blogPosts = require("./blogPosts");
 
 function createNewBlogPost(req, res) {
   const { id } = req.params;
   const { title, content, img, visibility, category } = req.body;
 
-  const newBlogPost = createBlogPost(
+  const newBlogPost = blogPosts.createBlogPost(
     id,
     title,
     content,
@@ -27,7 +23,7 @@ function createNewBlogPost(req, res) {
 function removeBlogPost(req, res) {
   const { id } = req.params;
 
-  const deletedPost = deleteBlogPost(id);
+  const deletedPost = blogPosts.deleteBlogPost(id);
 
   if (deletedPost) {
     res.json({ status: "OK" });
@@ -40,7 +36,7 @@ function modifyBlogPost(req, res) {
   const { id } = req.params;
   const { title, content, img, visibility, category } = req.body;
 
-  const updatedPost = updateBlogPost(
+  const updatedPost = blogPosts.updateBlogPost(
     id,
     title,
     content,
