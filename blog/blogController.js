@@ -1,5 +1,19 @@
 const blogPosts = require("./blogPosts");
 
+function increaseViews(postId) {
+  const post = blogPosts.getBlogPostById(postId);
+  if (post) {
+    post.views++;
+  }
+}
+
+function increaseLikes(postId) {
+  const post = blogPosts.getBlogPostById(postId);
+  if (post) {
+    post.likes++;
+  }
+}
+
 function createNewBlogPost(req, res) {
   const { id } = req.params;
   const { title, content, img, visibility, category } = req.body;
@@ -52,8 +66,22 @@ function modifyBlogPost(req, res) {
   }
 }
 
+function increaseViewsHandler(req, res) {
+  const { id } = req.params;
+  increaseViews(id);
+  res.json({ status: "OK" });
+}
+
+function increaseLikesHandler(req, res) {
+  const { id } = req.params;
+  increaseLikes(id);
+  res.json({ status: "OK" });
+}
+
 module.exports = {
   createNewBlogPost,
   removeBlogPost,
   modifyBlogPost,
+  increaseViewsHandler,
+  increaseLikesHandler,
 };

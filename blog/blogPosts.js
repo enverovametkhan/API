@@ -19,60 +19,84 @@ const blogPosts = [
   },
 ];
 
-function getBlogPostById(id) {
-  return blogPosts.find((post) => post._id === id);
-}
+const getBlogPostById = (id) => {
+  try {
+    const post = blogPosts.find((post) => post._id === id);
+    if (!post) throw new Error("Blog post not found");
+    return post;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
-function getBlogPostsByCategory(category) {
-  return blogPosts.filter((post) => post.category === category);
-}
+const getBlogPostsByCategory = (category) => {
+  try {
+    const filteredPosts = blogPosts.filter(
+      (post) => post.category === category
+    );
+    return filteredPosts;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
-function getBlogPostsByCategoryAndUserId(category, userId) {
-  return blogPosts.filter(
-    (post) => post.category === category && post.userId === userId
-  );
-}
+const getBlogPostsByCategoryAndUserId = (category, userId) => {
+  try {
+    const filteredPosts = blogPosts.filter(
+      (post) => post.category === category && post.userId === userId
+    );
+    return filteredPosts;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
-function createBlogPost(id, title, content, img, visibility, category) {
-  const newPost = {
-    _id: id,
-    name: title,
-    img,
-    views: 0,
-    likes: 0,
-    category,
-    userId: "user1",
-  };
+const createBlogPost = (id, title, content, img, visibility, category) => {
+  try {
+    const newPost = {
+      _id: id,
+      name: title,
+      img,
+      views: 0,
+      likes: 0,
+      category,
+      userId: "user1",
+    };
 
-  blogPosts.push(newPost);
+    blogPosts.push(newPost);
 
-  return newPost;
-}
+    return newPost;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
-function deleteBlogPost(id) {
-  const index = blogPosts.findIndex((post) => post._id === id);
+const deleteBlogPost = (id) => {
+  try {
+    const index = blogPosts.findIndex((post) => post._id === id);
+    if (index === -1) throw new Error("Blog post not found");
 
-  if (index !== -1) {
     blogPosts.splice(index, 1);
     return true;
+  } catch (error) {
+    throw new Error(error.message);
   }
+};
 
-  return false;
-}
+const updateBlogPost = (id, title, content, img, visibility, category) => {
+  try {
+    const post = blogPosts.find((post) => post._id === id);
+    if (!post) throw new Error("Blog post not found");
 
-function updateBlogPost(id, title, content, img, visibility, category) {
-  const post = blogPosts.find((post) => post._id === id);
-
-  if (post) {
     post.name = title;
     post.img = img;
     post.category = category;
 
     return true;
+  } catch (error) {
+    throw new Error(error.message);
   }
-
-  return false;
-}
+};
 
 module.exports = {
   getBlogPostById,
