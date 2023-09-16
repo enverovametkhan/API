@@ -1,29 +1,29 @@
 const express = require("express");
 const router = express.Router();
-const userController = require("@root/Auth/userController");
-const blogController = require("@root/blog/blogController");
-const blogPosts = require("@root/blog/blogPosts");
 
-router.post("/api/user/signup", userController.signup);
-router.post("/api/user/login", userController.login);
-router.delete("/api/user", userController.deleteUser);
-router.post("/api/user/refreshToken/:token", userController.refreshToken);
-router.get("/api/user/logout", userController.logout);
+const {
+  baseFunctionControllerBlogs,
+  getBlog,
+  getBlogsInCategory,
+  getUserBlogsInCategory,
+  updateBlog,
+  deleteBlog,
+  createBlog,
+} = require("@root/blogs/blogs.controller");
 
-router.get("/api/blog/:id", blogPosts.getBlogPostById);
-router.get("/api/blog/category/:category", blogPosts.getBlogPostsByCategory);
-router.get(
-  "/api/blog/category/:category/user/:userId",
-  blogPosts.getBlogPostsByCategoryAndUserId
-);
-router.post("/api/blog", blogPosts.createBlogPost);
-router.delete("/api/blog/:id", blogPosts.deleteBlogPost);
-router.put("/api/blog/:id", blogPosts.updateBlogPost);
+const { baseFunctionControllerUsers } = require("@root/users/users.controller");
 
-router.post("/api/blog/:id", blogController.createNewBlogPost);
-router.delete("/api/blog/:id", blogController.removeBlogPost);
-router.put("/api/blog/:id", blogController.modifyBlogPost);
-router.put("/api/blog/:id/increaseViews", blogController.increaseViewsHandler);
-router.put("/api/blog/:id/increaseLikes", blogController.increaseLikesHandler);
+// Blogs
+router.get("/api/blog/:id", getBlog);
+router.get("/api/blog/category/:category", getBlogsInCategory);
+router.get("/api/blog/:userId/:category", getUserBlogsInCategory);
+router.put("/api/blog/:id", updateBlog);
+router.delete("/api/blog/:id", deleteBlog);
+router.post("/api/blog", createBlog);
+
+// Users
+
+// Other routes
+router.post("/hellos", baseFunctionControllerUsers);
 
 module.exports = router;
