@@ -99,7 +99,6 @@ async function createBlogService({
     }
 
     const newBlog = {
-      id: Date.now().toString(),
       title,
       content,
       image,

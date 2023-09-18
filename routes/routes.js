@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  baseFunctionControllerBlogs,
   getBlog,
   getBlogsInCategory,
   getUserBlogsInCategory,
@@ -11,9 +10,18 @@ const {
   createBlog,
 } = require("@root/blogs/blogs.controller");
 
-const { baseFunctionControllerUsers } = require("@root/users/users.controller");
+const {
+  loginUser,
+  signupUser,
+  verifyUserEmail,
+  logoutUser,
+  getUserInfo,
+  deleteUserAccount,
+  updateUserProfile,
+  refreshUserToken,
+} = require("@root/users/users.controller");
 
-// Blogs
+// Blog Routes
 router.get("/api/blog/:id", getBlog);
 router.get("/api/blog/category/:category", getBlogsInCategory);
 router.get("/api/blog/:userId/:category", getUserBlogsInCategory);
@@ -21,9 +29,14 @@ router.put("/api/blog/:id", updateBlog);
 router.delete("/api/blog/:id", deleteBlog);
 router.post("/api/blog", createBlog);
 
-// Users
-
-// Other routes
-router.post("/hellos", baseFunctionControllerUsers);
+// User Routes
+router.post("/api/user/login", loginUser);
+router.post("/api/user/signup", signupUser);
+router.get("/api/user/verifyEmail/:hash", verifyUserEmail);
+router.get("/api/user/logout", logoutUser);
+router.get("/api/user", getUserInfo);
+router.put("/api/user", updateUserProfile);
+router.delete("/api/user", deleteUserAccount);
+router.post("/api/user/refreshAccessToken/:id", refreshUserToken);
 
 module.exports = router;
