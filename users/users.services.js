@@ -10,59 +10,78 @@ const JWT_SECRET = "your-secret-key";
 const JWT_EXPIRATION = "1h";
 
 async function login(username, password) {
-  const user = dummyUsers.find((user) => user.username === username);
+  try {
+    const user = dummyUsers.find((user) => user.username === username);
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      return null;
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return null;
+    }
+
+    const authToken = generateAuthToken(user.id);
+
+    user.authToken = authToken;
+
+    return {
+      authToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
+}
 
-  const passwordMatch = await bcrypt.compare(password, user.password);
+async function signup(username, email, password) {
+  try {
+    const saltRounds = 10;
+    const salt = await bcrypt.genSalt(saltRounds);
 
-  if (!passwordMatch) {
-    throw new Error("Incorrect password");
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = {
+      id: Date.now().toString(),
+      username,
+      email,
+      password: hashedPassword,
+      authToken: "",
+      refreshToken: "",
+      deletedAt: "",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    dummyUsers.push(newUser);
+
+    const authToken = generateAuthToken(newUser.id);
+
+    newUser.authToken = authToken;
+
+    return {
+      authToken,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  const authToken = generateAuthToken(user.id);
-
-  user.authToken = authToken;
-
-  return {
-    authToken,
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-    },
-  };
 }
 
 function generateAuthToken(userId) {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
-}
-
-async function signup(username, email, password) {
-  const existingUser = dummyUsers.find((user) => user.email === email);
-  if (existingUser) {
-    throw new Error("Email already in use");
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const newUser = {
-    id: Date.now().toString(),
-    username,
-    email,
-    password: hashedPassword,
-    authToken: "",
-    refreshToken: "",
-    deletedAt: "",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-
-  dummyUsers.push(newUser);
-
-  return newUser;
 }
 
 async function verifyEmail(hash) {
@@ -87,10 +106,11 @@ async function logout(userId) {
   return "Logged out successfully";
 }
 
-function getUser(userId) {
+async function getUser(userId) {
   const user = dummyUsers.find((user) => user.id === userId);
 
   if (!user) {
+    console.error(`User not found for userId: ${userId}`);
     throw new Error("User not found");
   }
 

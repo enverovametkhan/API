@@ -12,22 +12,31 @@ const {
 async function loginUser(req, res) {
   try {
     const { username, password } = req.body;
-    const user = await login(username, password);
+    const response = await login(username, password);
 
-    if (!user) {
-      return res.status(401).json({ error: "Invalid username or password" });
+    if (!response) {
+      return res
+        .status(401)
+        .json({ error: "User not found or incorrect password" });
     }
 
-    res.json(user);
+    return res.json(response);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
 async function signupUser(req, res) {
   try {
     const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      res
+        .status(400)
+        .json({ error: "Username, email, and password are required." });
+      return;
+    }
+
     const newUser = await signup(username, email, password);
     res.status(201).json(newUser);
   } catch (error) {
@@ -72,7 +81,8 @@ async function logoutUser(req, res) {
 
 async function getUserInfo(req, res) {
   try {
-    const user = await getUser(userId);
+    const { id } = req.params;
+    const user = await getUser(id);
 
     if (!user) {
       res.status(404).send();
@@ -124,6 +134,7 @@ async function updateUserProfile(req, res) {
 async function refreshUserToken(req, res) {
   try {
     const { id } = req.params;
+    console.log("Refresh User Token - ID:", id);
     const response = await refreshAccessToken(id);
 
     if (!response) {
@@ -133,7 +144,7 @@ async function refreshUserToken(req, res) {
 
     res.send(response);
   } catch (error) {
-    console.error(error);
+    console.error("Refresh User Token Error:", error);
     res.status(500).send("Internal Server Error");
   }
 }
