@@ -32,11 +32,11 @@ router.post("/api/blog", createBlog);
 // User Routes
 router.post("/api/user/login", loginUser);
 router.post("/api/user/signup", signupUser);
-// router.get("/api/user/verifyEmail/:hash", verifyUserEmail);
-// router.get("/api/user/logout", logoutUser);
-// router.get("/api/user/:id", getUserInfo);
-// router.put("/api/user/update", updateUserProfile);
-// router.delete("/api/user/delete", deleteUserAccount);
-// router.post("/api/user/refreshAccessToken/:id", refreshUserToken);
+router.get("/api/user/verifyEmail/:hash", verifyUserEmail);
+router.get("/api/user/logout", logoutUser);
+router.get("/api/user/:id", getUserInfo);
+router.put("/api/user/update", updateUserProfile);
+router.delete("/api/user/delete", deleteUserAccount);
+router.post("/api/user/refreshAccessToken/:id", refreshUserToken);
 
 module.exports = router;

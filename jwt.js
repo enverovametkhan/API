@@ -1,11 +1,9 @@
 const jwt = require("jsonwebtoken");
 
-const jwtSecretKey = "my_key";
+const JWT_SECRET = "your-secret-key";
 
-function createToken(payload) {
-  return jwt.sign(payload, jwtSecretKey, {
-    expiresIn: "1h",
-  });
+async function createToken(payload, expiration) {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiration });
 }
 
 module.exports = { createToken };

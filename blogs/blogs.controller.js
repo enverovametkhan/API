@@ -1,5 +1,4 @@
 const {
-  baseFunction,
   getBlogService,
   getBlogInCategoryService,
   getUserBlogInCategoryService,

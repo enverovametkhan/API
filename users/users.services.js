@@ -5,83 +5,95 @@ const {
   dummyResetPasswordHash,
   dummyConfirmEmailHash,
 } = require("./users.data");
+const { createToken } = require("../jwt");
 
-const JWT_SECRET = "your-secret-key";
-const JWT_EXPIRATION = "1h";
-
-async function login(username, password) {
+async function hashPassword(password) {
   try {
-    const user = dummyUsers.find((user) => user.username === username);
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    return hashedPassword;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+async function login(email, password) {
+  try {
+    const user = dummyUsers.find((user) => user.email === email);
 
     if (!user) {
       return null;
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
+    const validPassword = await bcrypt.compare(password, user.password);
+    console.log(validPassword);
+    if (!validPassword) {
       return null;
     }
 
-    const authToken = generateAuthToken(user.id);
+    let userData = {
+      userId: user.id,
+      email: user.email,
+      username: user.username,
+    };
 
-    user.authToken = authToken;
+    const refreshToken = await createToken(userData, "7d");
+    const accessToken = await createToken(userData, "1h");
 
     return {
-      authToken,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
+      refreshToken,
+      accessToken,
+      userId: user.id,
+      email: user.email,
+      username: user.username,
     };
   } catch (error) {
     console.error(error);
-    throw error;
+    return null;
   }
 }
+async function signup(username, email, password, confirmedPassword) {
+  console.log(`${email}, ${username}, ${password}, ${confirmedPassword}`);
 
-async function signup(username, email, password) {
-  try {
-    const saltRounds = 10;
-    const salt = await bcrypt.genSalt(saltRounds);
-
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = {
-      id: Date.now().toString(),
-      username,
-      email,
-      password: hashedPassword,
-      authToken: "",
-      refreshToken: "",
-      deletedAt: "",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    dummyUsers.push(newUser);
-
-    const authToken = generateAuthToken(newUser.id);
-
-    newUser.authToken = authToken;
-
-    return {
-      authToken,
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-      },
-    };
-  } catch (error) {
-    console.error(error);
-    throw error;
+  let user = dummyUsers.find((user) => user.email === email);
+  if (user) {
+    throw new Error("Email already exists.");
   }
-}
 
-function generateAuthToken(userId) {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  if (password !== confirmedPassword) {
+    throw new Error("Passwords do not match.");
+  }
+
+  let saltRounds = 10;
+  let hashedPassword = await bcrypt.hash(password, saltRounds);
+
+  let newUser = {
+    id: "001",
+    username: username,
+    email: email,
+    password: hashedPassword,
+    refreshToken: "",
+    deletedAt: "",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  dummyUsers.push(newUser);
+
+  let magicLinkToken = await createToken({ user_id: newUser.id }, "1d");
+
+  let newMagicLink = {
+    id: "7777",
+    user_id: newUser.id,
+    token: magicLinkToken,
+    expiresAt: 1694855778,
+    createdAt: 1694855778,
+    updatedAt: 1694855778,
+  };
+
+  console.log(newMagicLink);
+
+  return newUser;
 }
 
 async function verifyEmail(hash) {

@@ -11,8 +11,8 @@ const {
 
 async function loginUser(req, res) {
   try {
-    const { username, password } = req.body;
-    const response = await login(username, password);
+    const { email, password } = req.body;
+    const response = await login(email, password);
 
     if (!response) {
       return res
@@ -22,22 +22,22 @@ async function loginUser(req, res) {
 
     return res.json(response);
   } catch (error) {
-    console.error(error);
+    console.error("Login Error:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
 async function signupUser(req, res) {
   try {
-    const { username, email, password } = req.body;
-    if (!username || !email || !password) {
-      res
-        .status(400)
-        .json({ error: "Username, email, and password are required." });
+    const { username, email, password, confirmedPassword } = req.body;
+    if (!username || !email || !password || !confirmedPassword) {
+      res.status(400).json({
+        error: "Username, email, password, and confirmedPassword are required.",
+      });
       return;
     }
 
-    const newUser = await signup(username, email, password);
+    const newUser = await signup(username, email, password, confirmedPassword);
     res.status(201).json(newUser);
   } catch (error) {
     console.error(error);
