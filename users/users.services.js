@@ -5,7 +5,7 @@ const {
   dummyResetPasswordHash,
   dummyConfirmEmailHash,
 } = require("./users.data");
-const { createToken } = require("../jwt");
+const { createToken, decryptToken } = require("../jwt");
 
 async function hashPassword(password) {
   try {
@@ -102,6 +102,11 @@ async function verifyEmail(hash) {
   if (!emailHash) {
     throw new Error("Invalid email verification token");
   }
+  console.log("Email has been verifed");
+  const index = dummyConfirmEmailHash.findIndex(
+    (item) => item.id === emailHash.id
+  );
+  const deleteEmailHash = dummyConfirmEmailHash.splice(index, 1)[0];
 
   return "Email verified successfully";
 }

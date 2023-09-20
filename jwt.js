@@ -6,4 +6,7 @@ async function createToken(payload, expiration) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: expiration });
 }
 
-module.exports = { createToken };
+async function decryptToken(token) {
+  return await jwt.verify(token, JWT_SECRET);
+}
+module.exports = { createToken, decryptToken };
