@@ -6,6 +6,7 @@ const {
   dummyConfirmEmailHash,
 } = require("./users.data");
 const { createToken, decryptToken } = require("../jwt");
+const { useRouteLoaderData } = require("react-router-dom");
 
 async function hashPassword(password) {
   try {
@@ -124,30 +125,45 @@ async function logout(userId) {
 }
 
 async function getUser(userId) {
-  const user = dummyUsers.find((user) => user.id === userId);
+  try {
+    let jwtToken =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6InNtaXRoIiwiaWF0IjoxNTE2MjM5MDIyfQ.SO0OIwKXnr6LFIg77qTn2W4Hfjq-2AdO7Iu9l5pq654";
+    let userData = await decryptToken(jwtToken);
+    const user = dummyUsers.find((user) => user.id === userData.user_id);
 
-  if (!user) {
-    console.error(`User not found for userId: ${userId}`);
-    throw new Error("User not found");
+    if (!user) {
+      console.error(`User not found for userId: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
-  };
 }
 
 async function deleteUser(userId) {
-  const userIndex = dummyUsers.findIndex((user) => user.id === userId);
+  try {
+    let userData = await decryptToken(jwtToken);
+    const user = dummyUsers.find((user) => user.id === userData.userId);
 
-  if (userIndex === -1) {
-    throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.deletedAt = Date.now();
+
+    dummyUsers.push(user);
+    return "User deleted successfully";
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  dummyUsers[userIndex].deletedAt = Date.now();
-
-  return "User deleted successfully";
 }
 
 async function updateUser(userId, updatedUserData) {
