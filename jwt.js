@@ -7,6 +7,12 @@ async function createToken(payload, expiration) {
 }
 
 async function decryptToken(token) {
-  return await jwt.verify(token, JWT_SECRET);
+  try {
+    const decoded = await jwt.verify(token, JWT_SECRET);
+    return decoded;
+  } catch (error) {
+    console.error("JWT Verification Error:", error);
+    throw error;
+  }
 }
 module.exports = { createToken, decryptToken };
