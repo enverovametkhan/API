@@ -8,6 +8,10 @@ const {
 const { createToken, decryptToken } = require("../jwt");
 const { useRouteLoaderData } = require("react-router-dom");
 
+let jwtToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMDA3IiwiZW1haWwiOiJqYXNvbkBob3RtYWlsLmNvbSIsInVzZXJuYW1lIjoiamFzb24iLCJpYXQiOjE2OTUyODU5NzcsImV4cCI6MTY5NTcxNzk3N30.qFSP0gwYKkkC6bvNX4ZizbENdQq4_UoncVVjNPu3JDw";
+let saltRounds = 10;
+
 async function hashPassword(password) {
   try {
     const saltRounds = 10;
@@ -126,8 +130,6 @@ async function logout(userId) {
 
 async function getUser(userId) {
   try {
-    let jwtToken =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6InNtaXRoIiwiaWF0IjoxNTE2MjM5MDIyfQ.SO0OIwKXnr6LFIg77qTn2W4Hfjq-2AdO7Iu9l5pq654";
     let userData = await decryptToken(jwtToken);
     const user = dummyUsers.find((user) => user.id === userData.user_id);
 
@@ -148,37 +150,59 @@ async function getUser(userId) {
 }
 
 async function deleteUser(userId) {
+  let userData = await decryptToken(jwtToken);
+  const user = dummyUsers.find((user) => user.id === userData.user_id);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  user.deletedAt = Date.now();
+
+  dummyUsers.push(user);
+  return "User deleted successfully";
+}
+
+async function updateUser(userId, updatedUserData) {
   try {
     let userData = await decryptToken(jwtToken);
-    const user = dummyUsers.find((user) => user.id === userData.userId);
 
-    if (!user) {
+    const userIndex = dummyUsers.findIndex((user) => user.id === userId);
+
+    if (userIndex === -1) {
       throw new Error("User not found");
     }
 
-    user.deletedAt = Date.now();
+    const user = dummyUsers[userIndex];
 
-    dummyUsers.push(user);
-    return "User deleted successfully";
+    if (updatedUserData.email && updatedUserData.email !== user.email) {
+      user.email = updatedUserData.email;
+
+      let magicLinkToken = await createToken({ user_id: user.id }, "1d");
+
+      let newMagicLink = {
+        id: "7777",
+        user_id: user.id,
+        token: magicLinkToken,
+        expiresAt: 1694855778,
+        createdAt: 1694855778,
+        updatedAt: 1694855778,
+      };
+
+      console.log(newMagicLink);
+      console.log("Sending link to email...");
+    }
+
+    user.username = updatedUserData.username || user.username;
+    user.updatedAt = Date.now();
+
+    dummyUsers[userIndex] = user;
+
+    return "User updated successfully";
   } catch (error) {
     console.error(error);
     throw error;
   }
-}
-
-async function updateUser(userId, updatedUserData) {
-  const userIndex = dummyUsers.findIndex((user) => user.id === userId);
-
-  if (userIndex === -1) {
-    throw new Error("User not found");
-  }
-
-  const user = dummyUsers[userIndex];
-  user.username = updatedUserData.username || user.username;
-  user.email = updatedUserData.email || user.email;
-  user.updatedAt = Date.now();
-
-  return "User updated successfully";
 }
 
 async function refreshAccessToken(userId) {

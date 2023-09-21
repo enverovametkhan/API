@@ -21,3 +21,6 @@ module.exports = {
     return hashedPassword;
   },
 };
+
+let newHash = await hashPassword(password);
+console.log(newHash);
