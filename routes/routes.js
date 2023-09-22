@@ -19,6 +19,8 @@ const {
   deleteUserAccount,
   updateUserProfile,
   refreshUserToken,
+  resetUserPassword,
+  checkResetPassword,
 } = require("@root/users/users.controller");
 
 // Blog Routes
@@ -38,5 +40,7 @@ router.get("/api/user/:id", getUserInfo);
 router.put("/api/user/update", updateUserProfile);
 router.delete("/api/user/delete", deleteUserAccount);
 router.post("/api/user/refreshAccessToken/:id", refreshUserToken);
+router.post("/api/user/resetPassword", resetUserPassword);
+router.get("/api/user/checkResetPasswordToken/:id", checkResetPassword);
 
 module.exports = router;

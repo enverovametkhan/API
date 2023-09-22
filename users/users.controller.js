@@ -7,6 +7,8 @@ const {
   deleteUser,
   updateUser,
   refreshAccessToken,
+  resetPassword,
+  checkResetPasswordToken,
 } = require("./users.services");
 
 async function loginUser(req, res) {
@@ -147,6 +149,44 @@ async function refreshUserToken(req, res) {
     console.error("Refresh User Token Error:", error);
     res.status(500).send("Internal Server Error");
   }
+
+  async function resetUserPassword(req, res) {
+    try {
+      const { token } = req.body;
+      console.log("Reset Password - Token:", token);
+
+      const result = await resetPassword(token);
+
+      res.status(result.status).json({ message: result.message });
+    } catch (error) {
+      console.error("Reset Password Error:", error);
+
+      if (error.message === "User not found") {
+        res.status(404).json({ message: "User not found" });
+      } else {
+        res.status(500).json({ message: "Internal Server Error" });
+      }
+    }
+  }
+
+  async function checkResetPassword(req, res) {
+    try {
+      const { token } = req.body;
+      console.log("Check Reset Password Token:", token);
+
+      const result = await checkResetPasswordToken(token);
+
+      res.status(result.status).json({ message: result.message });
+    } catch (error) {
+      console.error("Check Reset Password Token Error:", error);
+
+      if (error.message === "Invalid token") {
+        res.status(400).json({ message: "Invalid token" });
+      } else {
+        res.status(500).json({ message: "Internal Server Error" });
+      }
+    }
+  }
 }
 
 module.exports = {
@@ -158,4 +198,6 @@ module.exports = {
   deleteUserAccount,
   updateUserProfile,
   refreshUserToken,
+  resetUserPassword,
+  checkResetPassword,
 };
