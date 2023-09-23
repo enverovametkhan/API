@@ -139,7 +139,7 @@ async function updateUserProfile(req, res) {
 async function refreshUserToken(req, res) {
   try {
     const { id } = req.params;
-    console.log("Refresh User Token - ID:", id);
+    console.log("Refresh User Token - ID:", 777);
     const response = await refreshAccessToken(id);
 
     if (!response) {
@@ -175,12 +175,12 @@ async function resetUserPassword(req, res) {
 
 async function checkResetPassword(req, res) {
   try {
-    const { token } = req.body;
+    const { token } = req.params;
     console.log("Check Reset Password Token:", token);
 
     const result = await checkResetPasswordToken(token);
 
-    res.status(result.status).json({ message: result.message });
+    res.status(result.status).json({ message: "Token is valid" });
   } catch (error) {
     console.error("Check Reset Password Token Error:", error);
 
