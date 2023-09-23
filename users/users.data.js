@@ -3,7 +3,7 @@ let dummyUsers = [
     id: "007",
     username: "jason",
     email: "jason@hotmail.com",
-    password: "$2b$10$Nogp/zjZpcfAEvsoLJwbTO4MxwSrdyGjJQrNUqVqbO5NKH1CydzD6",
+    password: "$2b$10$5Pqhnzq5B3DZZS6dsCYRSOGEZJnII38sgBZagMtMo64jDUo3LSP4K",
     authToken: "001",
     refreshToken: "",
     deletedAt: "",

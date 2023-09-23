@@ -316,64 +316,99 @@ async function refreshAccessToken() {
   } catch (error) {
     throw error;
   }
+}
 
-  async function resetPassword() {
-    try {
-      let userData = await decryptToken(jwtToken);
+async function resetPassword() {
+  try {
+    let userData = await decryptToken(jwtToken);
 
-      // Создать новый токен для сброса пароля
-      let newJwtToken = createToken({ user_id: userData.user_id }, "7d");
+    // Создать новый токен для сброса пароля
+    let newJwtToken = createToken({ user_id: userData.user_id }, "7d");
 
-      // Проверить, существует ли существующий токен сброса пароля
-      let existResetPasswordHash = dummyResetPasswordHash.find(
-        (each) => each.user_id === userData.user_id
+    // Проверить, существует ли существующий токен сброса пароля
+    let existResetPasswordHash = dummyResetPasswordHash.find(
+      (each) => each.user_id === userData.user_id
+    );
+
+    if (existResetPasswordHash) {
+      // Если существует, то удалить
+      const index = dummyResetPasswordHash.findIndex(
+        (each) => each.id === existResetPasswordHash.id
       );
-
-      if (existResetPasswordHash) {
-        // Если существует, то удалить
-        const index = dummyResetPasswordHash.findIndex(
-          (each) => each.id === existResetPasswordHash.id
-        );
-        const deletedHash = dummyResetPasswordHash.splice(index, 1)[0];
-        console.log("Found and deleted existing password reset");
-      }
-      // Создать новый токен
-      let newResetPasswordHash = {
-        id: "777",
-        user_id: userData.user_id,
-        token: newJwtToken,
-        expiresAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      dummyResetPasswordHash.push(newResetPasswordHash);
-
-      return {
-        status: 200,
-        message: "Check your email for a reset password link",
-      };
-    } catch (error) {
-      throw error;
+      const deletedHash = dummyResetPasswordHash.splice(index, 1)[0];
+      console.log("Found and deleted existing password reset");
     }
+    // Создать новый токен
+    let newResetPasswordHash = {
+      id: "777",
+      user_id: userData.user_id,
+      token: newJwtToken,
+      expiresAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    dummyResetPasswordHash.push(newResetPasswordHash);
+
+    return {
+      status: 200,
+      message: "Check your email for a reset password link",
+    };
+  } catch (error) {
+    throw error;
   }
+}
 
-  async function checkResetPasswordToken(token) {
-    try {
-      let existResetPasswordHash = dummyResetPasswordHash.find(
-        (each) => each.token === token
-      );
+async function checkResetPasswordToken(token) {
+  try {
+    let existResetPasswordHash = dummyResetPasswordHash.find(
+      (each) => each.token === token
+    );
 
-      if (!existResetPasswordHash) {
-        throw new Error("Invalid token");
-      }
-
-      return {
-        status: 200,
-      };
-    } catch (error) {
-      throw error;
+    if (!existResetPasswordHash) {
+      throw new Error("Invalid token");
     }
+
+    return {
+      status: 200,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function changePassword(token, password, confirmedPassword) {
+  try {
+    const resetToken = dummyResetPasswordHash.find(
+      (each) => each.token === token
+    );
+
+    if (!resetToken) {
+      throw new Error("Invalid token");
+    }
+
+    if (password !== confirmedPassword) {
+      throw new Error("Passwords do not match");
+    }
+
+    const user = dummyUsers.find(
+      (eachUser) => eachUser.id === resetToken.user_id
+    );
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const newPassword = await bcrypt.hash(password, saltRounds);
+
+    user.password = newPassword;
+
+    return {
+      status: 200,
+      message: "Password reset successfully",
+    };
+  } catch (error) {
+    throw error;
   }
 }
 
@@ -388,4 +423,5 @@ module.exports = {
   refreshAccessToken,
   resetPassword,
   checkResetPasswordToken,
+  changePassword,
 };

@@ -21,6 +21,7 @@ const {
   refreshUserToken,
   resetUserPassword,
   checkResetPassword,
+  changeUserPassword,
 } = require("@root/users/users.controller");
 
 // Blog Routes
@@ -39,8 +40,8 @@ router.get("/api/user/logout", logoutUser);
 router.get("/api/user/:id", getUserInfo);
 router.put("/api/user/update", updateUserProfile);
 router.delete("/api/user/delete", deleteUserAccount);
-router.post("/api/user/refreshAccessToken/:id", refreshUserToken);
+router.get("/api/user/refreshAccessToken", refreshUserToken);
 router.post("/api/user/resetPassword", resetUserPassword);
-router.get("/api/user/checkResetPasswordToken/:id", checkResetPassword);
-
+router.get("/api/user/checkResetPasswordToken", checkResetPassword);
+router.put("/api/user/changePassword", changeUserPassword);
 module.exports = router;
