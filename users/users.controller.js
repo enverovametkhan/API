@@ -10,6 +10,8 @@ const {
   resetPassword,
   checkResetPasswordToken,
   changePassword,
+  swapEmail,
+  confirmEmailSwap,
 } = require("./users.services");
 
 async function loginUser(req, res) {
@@ -208,6 +210,40 @@ async function changeUserPassword(req, res) {
     }
   }
 }
+async function swapUserEmail(req, res) {
+  try {
+    const { newEmail } = req.body;
+    const result = await swapEmail(newEmail);
+
+    res.status(result.status).json({ message: result.message });
+  } catch (error) {
+    console.error("Swap Email Error:", error);
+
+    if (error.message === "User not found") {
+      res.status(404).json({ message: "User not found" });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+}
+async function confirmUserEmailSwap(req, res) {
+  try {
+    const { newEmail } = req.body;
+    const result = await confirmEmailSwap(newEmail);
+
+    res.status(result.status).json({ message: result.message });
+  } catch (error) {
+    console.error("Email Swapping Error:", error);
+
+    if (error.message === "User not found") {
+      res.status(404).json({ message: "User not found" });
+    } else {
+      res
+        .status(500)
+        .json({ message: "Email swapping failed. Please try again later." });
+    }
+  }
+}
 
 module.exports = {
   loginUser,
@@ -221,4 +257,6 @@ module.exports = {
   resetUserPassword,
   checkResetPassword,
   changeUserPassword,
+  swapUserEmail,
+  confirmUserEmailSwap,
 };

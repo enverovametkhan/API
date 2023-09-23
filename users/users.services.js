@@ -30,6 +30,12 @@ async function login(email, password) {
       return null;
     }
 
+    if (!user) {
+      throw new Error("Incorrect login credentials");
+    }
+    if (user.verifyEmail) {
+      throw new Error("Please verify your email address to continue");
+    }
     const validPassword = await bcrypt.compare(password, user.password);
     console.log(validPassword);
     if (!validPassword) {
@@ -57,6 +63,7 @@ async function login(email, password) {
     return null;
   }
 }
+
 async function signup(username, email, password, confirmedPassword) {
   console.log(`${email}, ${username}, ${password}, ${confirmedPassword}`);
 
@@ -77,6 +84,7 @@ async function signup(username, email, password, confirmedPassword) {
     username: username,
     email: email,
     password: hashedPassword,
+    verifyEmail: "verify.email",
     refreshToken: "",
     deletedAt: "",
     createdAt: new Date(),
@@ -108,6 +116,7 @@ async function verifyEmail(hash) {
     throw new Error("Invalid email verification token");
   }
   console.log("Email has been verifed");
+  user.verifyEmail = "";
   const index = dummyConfirmEmailHash.findIndex(
     (item) => item.id === emailHash.id
   );
@@ -412,6 +421,94 @@ async function changePassword(token, password, confirmedPassword) {
   }
 }
 
+async function swapEmail(newEmail) {
+  try {
+    const userData = await decryptToken(jwtToken);
+    const user = dummyUsers.find(
+      (eachUser) => eachUser.id === userData.user_id
+    );
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const existEmailSwap = dummyConfirmEmailHash.find(
+      (each) => each.user_id === user.id
+    );
+
+    if (existEmailSwap) {
+      const index = dummyConfirmEmailHash.findIndex(
+        (each) => each.id === existEmailSwap.id
+      );
+      dummyConfirmEmailHash.splice(index, 1);
+      console.log("Found an existing email swap request. Deleting it.");
+    }
+
+    const magicLinkToken = await createToken({ user_id: user.id }, "1d");
+
+    const swapEmailData = {
+      id: "5555",
+      user_id: user.id,
+      newEmail: newEmail,
+      token: magicLinkToken,
+      expiresAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    dummyConfirmEmailHash.push(swapEmailData);
+
+    return {
+      status: 200,
+      message: "Please check your email for the link",
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+async function confirmEmailSwap(newEmail) {
+  try {
+    const userData = await decryptToken(jwtToken);
+    const user = dummyUsers.find(
+      (eachUser) => eachUser.id === userData.user_id
+    );
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    console.log(user);
+
+    const checkEmailSwap = dummyConfirmEmailHash.find(
+      (each) => each.user_id === user.id
+    );
+
+    if (!checkEmailSwap) {
+      throw new Error("Email swapping error");
+    }
+
+    console.log(
+      "Swapped email from ${user.email} to ${checkEmailSwap.newEmail}"
+    );
+
+    user.email = checkEmailSwap.newEmail;
+
+    dummyUsers.push(user);
+
+    return {
+      status: 200,
+      message: "Email swapped successfully",
+    };
+  } catch (error) {
+    console.error("Email swapping error:", error);
+
+    return {
+      status: 500,
+      message: "Email swapping failed. Please try again later.",
+    };
+  }
+}
+
 module.exports = {
   login,
   signup,
@@ -424,4 +521,6 @@ module.exports = {
   resetPassword,
   checkResetPasswordToken,
   changePassword,
+  swapEmail,
+  confirmEmailSwap,
 };

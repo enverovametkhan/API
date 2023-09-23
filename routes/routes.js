@@ -22,6 +22,8 @@ const {
   resetUserPassword,
   checkResetPassword,
   changeUserPassword,
+  swapUserEmail,
+  confirmUserEmailSwap,
 } = require("@root/users/users.controller");
 
 // Blog Routes
@@ -44,4 +46,6 @@ router.get("/api/user/refreshAccessToken", refreshUserToken);
 router.post("/api/user/resetPassword", resetUserPassword);
 router.get("/api/user/checkResetPasswordToken", checkResetPassword);
 router.put("/api/user/changePassword", changeUserPassword);
+router.post("/api/user/swapEmail", swapUserEmail);
+router.get("/api/user/confirmEmailSwap/:id", confirmUserEmailSwap);
 module.exports = router;
