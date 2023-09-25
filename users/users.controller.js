@@ -19,19 +19,15 @@ async function loginUser(req, res) {
     const { email, password } = req.body;
     const response = await login(email, password);
 
-    if (!response) {
-      return res
-        .status(401)
-        .json({ error: "User not found or incorrect password" });
+    if (response) {
+      res.json(response);
+    } else {
+      res.status(401).json({ message: "Authentication failed" });
     }
-
-    return res.json(response);
   } catch (error) {
-    console.error("Login Error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    errorHandler(res, error, 500, "Login Error");
   }
 }
-
 async function signupUser(req, res) {
   try {
     const { username, email, password, confirmedPassword } = req.body;
@@ -55,11 +51,6 @@ async function verifyUserEmail(req, res) {
     const { hash } = req.params;
     const response = await verifyEmail(hash);
 
-    if (!response) {
-      res.status(404).send();
-      return;
-    }
-
     res.send(response);
   } catch (error) {
     console.error(error);
@@ -71,11 +62,6 @@ async function logoutUser(req, res) {
   try {
     const userId = "007";
     const response = await logout(userId);
-
-    if (!response) {
-      res.status(404).send();
-      return;
-    }
 
     res.send(response);
   } catch (error) {
@@ -89,63 +75,47 @@ async function getUserInfo(req, res) {
     const { id } = req.params;
     const user = await getUser(id);
 
-    if (!user) {
-      res.status(404).send();
-      return;
-    }
-
     res.json(user);
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");
   }
 }
-
 async function deleteUserAccount(req, res) {
   try {
     const userId = "007";
     const response = await deleteUser(userId);
 
-    if (!response) {
-      res.status(404).send();
-      return;
-    }
-
     res.send(response);
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");
   }
 }
-
 async function updateUserProfile(req, res) {
+  const { id } = req.params;
+  const updatedUserData = req.body;
+
   try {
-    const userId = "007";
-    const updatedUserData = req.body;
-    const response = await updateUser(userId, updatedUserData);
-
-    if (!response) {
-      res.status(404).send();
-      return;
-    }
-
-    res.send(response);
+    const result = await updateUser(id, updatedUserData);
+    res.status(200).json({ message: result });
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
+    console.error("Update User Error:", error);
+    res
+      .status(error.message === "User not found" ? 404 : 500)
+      .json({ message: error.message });
   }
 }
 
 async function refreshUserToken(req, res) {
   try {
-    const { id } = req.params;
-    console.log("Refresh User Token - ID:", 777);
-    const response = await refreshAccessToken(id);
+    const { refreshToken } = req.body;
 
-    if (!response) {
-      res.status(404).send();
-      return;
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token is missing" });
     }
+
+    const response = await refreshAccessToken(refreshToken);
 
     res.send(response);
   } catch (error) {
@@ -200,36 +170,27 @@ async function changeUserPassword(req, res) {
     res.status(result.status).json({ message: result.message });
   } catch (error) {
     console.error("Change Password Error:", error);
-
-    if (error.message === "Invalid token") {
-      res.status(400).json({ message: "Invalid token" });
-    } else if (error.message === "Password does not match") {
-      res.status(400).json({ message: "Password does not match" });
-    } else {
-      res.status(500).json({ message: "Internal Server Error" });
-    }
+    res.status(400).json({ message: error.message });
   }
 }
+
 async function swapUserEmail(req, res) {
   try {
     const { newEmail } = req.body;
     const result = await swapEmail(newEmail);
-
     res.status(result.status).json({ message: result.message });
   } catch (error) {
     console.error("Swap Email Error:", error);
-
-    if (error.message === "User not found") {
-      res.status(404).json({ message: "User not found" });
-    } else {
-      res.status(500).json({ message: "Internal Server Error" });
-    }
+    res
+      .status(error.message === "User not found" ? 404 : 500)
+      .json({ message: error.message });
   }
 }
+
 async function confirmUserEmailSwap(req, res) {
   try {
-    const { newEmail } = req.body;
-    const result = await confirmEmailSwap(newEmail);
+    const { hash } = req.params;
+    const result = await confirmEmailSwap(hash);
 
     res.status(result.status).json({ message: result.message });
   } catch (error) {
