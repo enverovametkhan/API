@@ -24,3 +24,5 @@ module.exports = {
 
 let newHash = await hashPassword(password);
 console.log(newHash);
+
+console.log(authToken);

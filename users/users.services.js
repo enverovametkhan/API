@@ -1,22 +1,27 @@
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const {
   dummyUsers,
   dummyResetPasswordHash,
   dummyConfirmEmailHash,
 } = require("./users.data");
-const { createToken, decryptToken, JWT_SECRET } = require("../jwt");
+const { createToken, decryptToken } = require("../jwt");
 
+const saltRounds = 10;
 let jwtToken =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMDA3IiwiZW1haWwiOiJqYXNvbkBob3RtYWlsLmNvbSIsInVzZXJuYW1lIjoiamFzb24iLCJpYXQiOjE2OTUyODU5NzcsImV4cCI6MTY9NTcxNzk3N30.qFSP0gwYKkkC6bvNX4ZizbENdQq4_UoncVVjNPu3JDw";
-let saltRounds = 10;
-
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwMDciLCJlbWFpbCI6Imphc29uQGhvdG1haWwuY29tIiwidXNlcm5hbWUiOiJqYXNvbiIsImlhdCI6MTY5NTcxOTIyNCwiZXhwIjoxNzIxNjM5MjI0fQ.2Xene58uddYZEaoheZkg7uT9syhZURYeoryhf8RPe9Q";
 async function hashPassword(password) {
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
-  return hashedPassword;
+  return await bcrypt.hash(password, saltRounds);
 }
 
 async function login(email, password) {
+  if (!email) {
+    throw new Error("Email is required");
+  }
+
+  if (!password) {
+    throw new Error("Password is required");
+  }
+
   const user = dummyUsers.find((user) => user.email === email);
 
   if (!user) {
@@ -39,15 +44,20 @@ async function login(email, password) {
     username: user.username,
   };
 
-  const refreshToken = await createToken(userData, "7d");
-  const accessToken = await createToken(userData, "1h");
+  const authToken = await createToken(userData, "300d");
+  const refreshToken = await createToken(userData, "500h");
 
+  user.authToken = authToken;
   user.refreshToken = refreshToken;
-  user.accessToken = accessToken;
+
+  const index = dummyUsers.findIndex((user) => user.id === user.id);
+  if (index !== -1) {
+    dummyUsers[index] = user;
+  }
 
   return {
+    authToken,
     refreshToken,
-    accessToken,
     userId: user.id,
     email: user.email,
     username: user.username,
@@ -55,7 +65,7 @@ async function login(email, password) {
 }
 
 async function signup(username, email, password, confirmedPassword) {
-  let user = dummyUsers.find((user) => user.email === email);
+  const user = dummyUsers.find((user) => user.email === email);
 
   if (user) {
     throw new Error("Email already exists.");
@@ -73,26 +83,16 @@ async function signup(username, email, password, confirmedPassword) {
     email: email,
     password: hashedPassword,
     verifyEmail: "verify.email",
+    authToken: "",
     refreshToken: "",
     deletedAt: "",
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
+  newUser.magicLinkToken = await createToken({ user_id: newUser.id }, "300d");
+
   dummyUsers.push(newUser);
-
-  const magicLinkToken = await createToken({ user_id: newUser.id }, "1d");
-
-  const newMagicLink = {
-    id: "7777",
-    user_id: newUser.id,
-    token: magicLinkToken,
-    expiresAt: 1694855778,
-    createdAt: 1694855778,
-    updatedAt: 1694855778,
-  };
-
-  console.log(newMagicLink);
 
   return newUser;
 }
@@ -110,39 +110,42 @@ async function verifyEmail(hash) {
     throw new Error("User not found");
   }
 
-  console.log("Email has been verified");
-
   user.verifyEmail = "";
 
-  const index = dummyConfirmEmailHash.findIndex(
-    (item) => item.id === emailHash.id
-  );
-
+  const index = dummyUsers.findIndex((user) => user.id === user.id);
   if (index !== -1) {
-    dummyConfirmEmailHash.splice(index, 1);
+    dummyUsers[index] = user;
   }
 
-  return { message: "Verified Email", status: 200 };
+  return { message: "Email has been verified", status: 200 };
 }
 
-async function logout(userId) {
-  const user = dummyUsers.find((user) => user.id === userId);
+async function logout() {
+  let userData = await decryptToken(jwtToken);
+  console.log(userData);
+  const userIndex = dummyUsers.findIndex((user) => user.id === userData.userId);
 
-  if (!user) {
+  if (userIndex === -1) {
     throw new Error("User not found");
   }
 
+  const user = dummyUsers[userIndex];
+
+  user.authToken = "";
   user.refreshToken = "";
 
-  return "Logged out successfully";
+  dummyUsers[userIndex] = user;
+
+  return "User logged out successfully";
 }
 
-async function getUser(userId) {
-  let userData = await decryptToken(jwtToken);
-  const user = dummyUsers.find((user) => user.id === userData.user_id);
+async function getUser() {
+  const userData = await decryptToken(jwtToken);
+
+  const user = dummyUsers.find((user) => user.id === userData.userId);
 
   if (!user) {
-    throw new Error(`User not found for userId: ${userId}`);
+    throw new Error(`User not found for userId: ${userData.userId}`);
   }
 
   return {
@@ -152,8 +155,9 @@ async function getUser(userId) {
   };
 }
 
-async function deleteUser(userId) {
-  const userIndex = dummyUsers.findIndex((user) => user.id === userId);
+async function deleteUser() {
+  const userData = await decryptToken(jwtToken);
+  const userIndex = dummyUsers.findIndex((user) => user.id === userData.userId);
 
   if (userIndex === -1) {
     throw new Error("User not found");
@@ -165,53 +169,82 @@ async function deleteUser(userId) {
 
   return "User deleted successfully";
 }
-async function updateUser(userId, updatedUserData) {
-  const user = dummyUsers.find((user) => user.id === userId);
 
-  if (!user) {
+async function updateUser(updatedUserData) {
+  let userData = await decryptToken(jwtToken);
+  const userIndex = dummyUsers.findIndex((user) => user.id === userData.userId);
+
+  if (userIndex === -1) {
     throw new Error("User not found");
   }
 
-  if (
-    updatedUserData.email !== undefined &&
-    updatedUserData.email !== user.email
-  ) {
+  const user = dummyUsers[userIndex];
+
+  if (!updatedUserData.username && !updatedUserData.email) {
+    throw new Error("Either username or email should be provided");
+  }
+
+  if (updatedUserData.email && updatedUserData.email !== user.email) {
     user.email = updatedUserData.email;
   }
 
-  user.username = updatedUserData.username || user.username;
-  user.updatedAt = Date.now();
+  if (updatedUserData.username) {
+    user.username = updatedUserData.username;
+  }
 
-  return "User updated successfully";
+  user.updatedAt = Date.now();
+  dummyUsers[userIndex] = user;
+
+  const response = {};
+
+  if (updatedUserData.email) {
+    response.email = "Updated successfully";
+  }
+
+  if (updatedUserData.username) {
+    response.username = "Updated successfully";
+  }
+
+  return response;
 }
 
-async function refreshAccessToken() {
+async function refreshAuthToken() {
   let userData = await decryptToken(jwtToken);
+  const index = dummyUsers.findIndex((user) => user.id === userData.userId);
 
-  const user = dummyUsers.find((user) => user.id === userData.user_id);
-
-  if (!user) {
+  if (index === -1) {
     throw new Error("User not found");
   }
 
-  const newAccessToken = await createToken(userData, "1h");
+  const user = dummyUsers[index];
 
-  user.accessToken = newAccessToken;
+  let userDataToUpdate = {
+    user_id: user.id,
+    email: user.email,
+    username: user.username,
+  };
+
+  const newRefreshToken = await createToken(userDataToUpdate, "100d");
+  const newAuthToken = await createToken(userDataToUpdate, "300h");
+
+  user.authToken = newAuthToken;
+  user.refreshToken = newRefreshToken;
+
+  dummyUsers[index] = user;
 
   return {
     id: user.id,
     username: user.username,
     email: user.email,
-    accessToken: newAccessToken,
+    authToken: user.authToken,
+    refreshToken: user.refreshToken,
   };
 }
 
 async function resetPassword() {
-  let userData = await decryptToken(jwtToken);
+  const userData = await decryptToken(jwtToken);
 
-  let newJwtToken = createToken({ user_id: userData.user_id }, "7d");
-
-  let existResetPasswordHash = dummyResetPasswordHash.find(
+  const existResetPasswordHash = dummyResetPasswordHash.find(
     (each) => each.user_id === userData.user_id
   );
 
@@ -219,14 +252,14 @@ async function resetPassword() {
     const index = dummyResetPasswordHash.findIndex(
       (each) => each.id === existResetPasswordHash.id
     );
-    const deletedHash = dummyResetPasswordHash.splice(index, 1)[0];
     console.log("Found and deleted existing password reset");
+    dummyResetPasswordHash.splice(index, 1);
   }
 
-  let newResetPasswordHash = {
+  const newResetPasswordHash = {
     id: "",
     user_id: userData.user_id,
-    token: newJwtToken,
+    token: jwtToken,
     expiresAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -240,9 +273,9 @@ async function resetPassword() {
   };
 }
 
-async function checkResetPasswordToken(token) {
+function checkResetPasswordToken(token) {
   console.log(token);
-  let existResetPasswordHash = dummyResetPasswordHash.find(
+  const existResetPasswordHash = dummyResetPasswordHash.find(
     (each) => each.token === token
   );
 
@@ -280,6 +313,11 @@ async function changePassword(token, password, confirmedPassword) {
 
   user.password = newPassword;
 
+  const index = dummyUsers.findIndex((eachUser) => eachUser.id === user.id);
+  if (index !== -1) {
+    dummyUsers[index] = user;
+  }
+
   return {
     status: 200,
     message: "Password changed successfully",
@@ -310,7 +348,7 @@ async function swapEmail(newEmail) {
   const magicLinkToken = await createToken({ user_id: user.id }, "1d");
 
   const swapEmailData = {
-    id: "5555",
+    id: "",
     user_id: user.id,
     newEmail: newEmail,
     token: magicLinkToken,
@@ -350,7 +388,14 @@ async function confirmEmailSwap(hash) {
 
   user.email = checkEmailSwap.newEmail;
 
+  const userIndex = dummyUsers.findIndex((eachUser) => eachUser.id === user.id);
+
+  if (userIndex !== -1) {
+    dummyUsers[userIndex] = user;
+  }
+
   const index = dummyConfirmEmailHash.findIndex((item) => item.token === hash);
+
   if (index !== -1) {
     dummyConfirmEmailHash.splice(index, 1);
   }
@@ -369,7 +414,7 @@ module.exports = {
   getUser,
   deleteUser,
   updateUser,
-  refreshAccessToken,
+  refreshAuthToken,
   resetPassword,
   checkResetPasswordToken,
   changePassword,
