@@ -13,14 +13,14 @@ async function getBlog(req, res) {
     const response = await getBlogService(id);
 
     if (!response) {
-      res.status(404).send();
+      res.status(404).json({ errorMessage: "No blogs found" });
       return;
     }
 
-    res.send(response);
+    res.json(response);
   } catch (error) {
     console.error(error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ errorMessage: "Internal Server Error" });
   }
 }
 
@@ -29,12 +29,12 @@ async function getBlogsInCategory(req, res) {
     const { category } = req.params;
     const response = await getBlogInCategoryService(category);
 
-    if (!response) {
-      res.status(404).send();
+    if (!response || response.length === 0) {
+      res.status(404).json({ errorMessage: "No blogs found" });
       return;
     }
 
-    res.send(response);
+    res.json(response);
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");
@@ -46,12 +46,12 @@ async function getUserBlogsInCategory(req, res) {
     const { userId, category } = req.params;
     const response = await getUserBlogInCategoryService(userId, category);
 
-    if (!response) {
-      res.status(404).send();
+    if (!response || response.length === 0) {
+      res.status(404).json({ errorMessage: "No blogs found" });
       return;
     }
 
-    res.send(response);
+    res.json(response);
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");
@@ -86,13 +86,14 @@ async function updateBlog(req, res) {
 async function deleteBlog(req, res) {
   try {
     const { id } = req.params;
+    const result = await deleteBlogService(id);
 
-    const deletedBlog = await deleteBlogService(id);
-
-    if (deletedBlog) {
+    if (result) {
       return res.json({ message: "Blog deleted successfully" });
     } else {
-      return res.status(404).json({ error: "Blog not found" });
+      return res
+        .status(404)
+        .json({ errorMessage: "No blogs found for deletion" });
     }
   } catch (error) {
     console.error(error);
@@ -103,11 +104,6 @@ async function deleteBlog(req, res) {
 async function createBlog(req, res) {
   try {
     const { title, content, image, user_id, categories } = req.body;
-
-    if (!title || !content || !user_id || !categories) {
-      res.status(400).json({ error: "Missing required fields" });
-      return;
-    }
 
     const newBlog = await createBlogService({
       title,

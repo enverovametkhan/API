@@ -9,6 +9,10 @@ const routes = require("./routes/routes");
 app.use(bodyParser.json());
 app.use("/", routes);
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(port, (err) => {
+  if (err) {
+    console.error(`Error starting the server: ${err.message}`);
+  } else {
+    console.log(`Server is running on port ${port}`);
+  }
 });
