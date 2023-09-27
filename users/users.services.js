@@ -112,7 +112,7 @@ async function verifyEmail(hash) {
 
   user.verifyEmail = "";
 
-  const index = dummyUsers.findIndex((user) => user.id === user.id);
+  const index = dummyUsers.findIndex((eachUser) => eachUser.id === user.id);
   if (index !== -1) {
     dummyUsers[index] = user;
   }
