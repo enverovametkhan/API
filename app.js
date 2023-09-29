@@ -17,8 +17,12 @@ function attachRequestContext(req, res, next) {
 app.use(bodyParser.json());
 app.use(attachRequestContext);
 
-const routes = require("./routes/routes");
-app.use(routes);
+require("./interceptors/interceptorIn")(app);
+require("./routes/routes")(app);
+require("./interceptors/interceptorOut")(app);
+
+require("./error.handlers/exception.filter.js")(app);
+require("./error.handlers/system.error.js");
 
 app.listen(port, (err) => {
   if (err) {

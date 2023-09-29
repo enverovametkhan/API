@@ -74,23 +74,21 @@ async function updateBlog(req, res, next) {
     const { id } = req.params;
     const { title, content, img, visibility, category } = req.body;
 
-    authMiddleware(req, res, async () => {
-      const updatedBlog = await updateBlogService(
-        id,
-        title,
-        content,
-        img,
-        visibility,
-        category
-      );
+    const updatedBlog = await updateBlogService(
+      id,
+      title,
+      content,
+      img,
+      visibility,
+      category
+    );
 
-      if (!updatedBlog) {
-        return res.status(404).json({ error: "Blog post not found" });
-      }
+    if (!updatedBlog) {
+      return res.status(404).json({ error: "Blog post not found" });
+    }
 
-      res.ourResponse = updatedBlog;
-      next();
-    });
+    res.ourResponse = updatedBlog;
+    next();
   } catch (error) {
     const { userId, category } = req.params;
     const errorMessage = {
