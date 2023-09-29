@@ -15,10 +15,10 @@ async function authMiddleware(req, res, next) {
       });
     }
 
-    let customData = await jwt.verify(authToken, jwtSecretKey);
+    let userData = await jwt.verify(authToken, jwtSecretKey);
 
-    req.customData = {
-      ...customData,
+    req.userData = {
+      ...userData,
     };
 
     next();
