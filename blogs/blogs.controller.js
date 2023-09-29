@@ -7,6 +7,8 @@ const {
   createBlogService,
 } = require("./blogs.services");
 
+const { authMiddleware } = require("@root/utilities/auth.middleware");
+
 async function getBlog(req, res) {
   try {
     const { id } = req.params;
@@ -41,7 +43,7 @@ async function getBlogsInCategory(req, res) {
   }
 }
 
-async function getUserBlogsInCategory(req, res) {
+async function getUserBlogsInCategory(req, res, next) {
   try {
     const { userId, category } = req.params;
     const response = await getUserBlogInCategoryService(userId, category);
@@ -51,35 +53,55 @@ async function getUserBlogsInCategory(req, res) {
       return;
     }
 
-    res.json(response);
+    res.ourResponse = response;
+    next();
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
+    const { userId, category } = req.params;
+    const errorMessage = {
+      ...error,
+      function: "getUserBlogsInCategory",
+      errorMessage: "An error occurred while fetching blogs",
+      userId,
+      category,
+    };
+
+    next(errorMessage);
   }
 }
 
-async function updateBlog(req, res) {
+async function updateBlog(req, res, next) {
   try {
     const { id } = req.params;
     const { title, content, img, visibility, category } = req.body;
 
-    const updatedBlog = await updateBlogService(
-      id,
-      title,
-      content,
-      img,
-      visibility,
-      category
-    );
+    authMiddleware(req, res, async () => {
+      const updatedBlog = await updateBlogService(
+        id,
+        title,
+        content,
+        img,
+        visibility,
+        category
+      );
 
-    if (!updatedBlog) {
-      return res.status(404).json({ error: "Blog post not found" });
-    }
+      if (!updatedBlog) {
+        return res.status(404).json({ error: "Blog post not found" });
+      }
 
-    return res.json(updatedBlog);
+      res.ourResponse = updatedBlog;
+      next();
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    const { userId, category } = req.params;
+    const errorMessage = {
+      ...error,
+      function: "updateBlog",
+      errorMessage: "An error occurred while updating the blog post",
+      userId,
+      category,
+    };
+
+    next(errorMessage);
   }
 }
 

@@ -4,7 +4,7 @@ const {
   dummyResetPasswordHash,
   dummyConfirmEmailHash,
 } = require("./users.data");
-const { createToken, decryptToken } = require("../jwt");
+const { createToken, decryptToken } = require("@root/utilities/jwt");
 
 const saltRounds = 10;
 let jwtToken =

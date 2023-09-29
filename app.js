@@ -4,10 +4,21 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 const bodyParser = require("body-parser");
-const routes = require("./routes/routes");
+const { createNamespace } = require("cls-hooked");
+const userAuthNamespace = createNamespace("userAuthNamespace");
+
+function attachRequestContext(req, res, next) {
+  userAuthNamespace.run(() => {
+    userAuthNamespace.set("req", req);
+    next();
+  });
+}
 
 app.use(bodyParser.json());
-app.use("/", routes);
+app.use(attachRequestContext);
+
+const routes = require("./routes/routes");
+app.use(routes);
 
 app.listen(port, (err) => {
   if (err) {

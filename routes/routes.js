@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { authMiddleware } = require("@root/utilities/auth.middleware");
 
 const {
   getBlog,
@@ -29,8 +30,12 @@ const {
 // Blog Routes
 router.get("/api/blog/:id", getBlog);
 router.get("/api/blog/category/:category", getBlogsInCategory);
-router.get("/api/blog/:userId/:category", getUserBlogsInCategory);
-router.put("/api/blog/:id", updateBlog);
+router.get(
+  "/api/blog/:userId/:category",
+  authMiddleware,
+  getUserBlogsInCategory
+);
+router.put("/api/blog/:id", authMiddleware, updateBlog);
 router.delete("/api/blog/:id", deleteBlog);
 router.post("/api/blog", createBlog);
 
