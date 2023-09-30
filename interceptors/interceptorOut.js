@@ -1,6 +1,6 @@
 module.exports = (app) => {
   app.use((req, res, next) => {
-    console.log("About to send response for ${req.originalUrl}");
+    console.log(`About to send response for ${req.originalUrl}`);
 
     const timeTaken = (Date.now() - req.timeStarted) / 1000;
 

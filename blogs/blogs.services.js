@@ -42,63 +42,31 @@ async function getUserBlogInCategoryService(userId, category) {
   return blogs;
 }
 
-async function updateBlogService(
-  id,
-  title,
-  content,
-  img,
-  visibility,
-  category
-) {
-  try {
-    if (!id) {
-      throw new Error("Blog ID is required");
-    }
-
-    const userData = await getAccessToUserData();
-
-    const index = dummyBlogs.findIndex((blog) => blog.id === id);
-
-    if (index === -1) {
-      throw new Error("Blog not found for updating");
-    }
-
-    const updatedBlog = dummyBlogs[index];
-
-    if (title !== undefined) {
-      updatedBlog.title = title;
-    }
-
-    if (content !== undefined) {
-      updatedBlog.content = content;
-    }
-
-    if (img !== undefined) {
-      updatedBlog.img = img;
-    }
-
-    if (visibility !== undefined) {
-      updatedBlog.visibility = visibility;
-    }
-
-    if (category !== undefined) {
-      updatedBlog.category = category;
-    }
-
-    dummyBlogs[index] = updatedBlog;
-
-    const response = {
-      content: "Blog post updated successfully",
-      userData: {
-        customMessage: "Blog post updated by user: " + userData.username,
-        ...userData,
-      },
-    };
-
-    return response;
-  } catch (error) {
-    throw error;
+async function updateBlogService(id, updatedBlogData) {
+  if (!id) {
+    throw new Error("Blog ID is required");
   }
+
+  const userData = await getAccessToUserData();
+
+  const index = dummyBlogs.findIndex((blog) => blog.id === id);
+
+  if (index === -1) {
+    throw new Error("Blog not found for updating");
+  }
+
+  const updatedBlog = { ...dummyBlogs[index], ...updatedBlogData };
+  dummyBlogs[index] = updatedBlog;
+
+  const response = {
+    content: "Blog post updated successfully",
+    userData: {
+      customMessage: `Blog post updated by user: ${userData.username}`,
+      ...userData,
+    },
+  };
+
+  return response;
 }
 
 function deleteBlogService(id) {

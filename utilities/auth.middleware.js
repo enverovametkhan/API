@@ -65,7 +65,7 @@ async function authMiddleware(req, res, next) {
     let errorMessage = {
       ...err,
       function: "AuthMiddleware",
-      errorMessage: "Unauthorized",
+      customMessage: "Unauthorized",
     };
 
     // if an error occured we passed a modifed error object and its passed down to exception filter

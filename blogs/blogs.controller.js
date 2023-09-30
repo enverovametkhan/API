@@ -7,8 +7,6 @@ const {
   createBlogService,
 } = require("./blogs.services");
 
-const { authMiddleware } = require("@root/utilities/auth.middleware");
-
 async function getBlog(req, res) {
   try {
     const { id } = req.params;
@@ -70,33 +68,32 @@ async function getUserBlogsInCategory(req, res, next) {
 }
 
 async function updateBlog(req, res, next) {
+  let id;
+
   try {
-    const { id } = req.params;
+    id = req.params.id;
+
     const { title, content, img, visibility, category } = req.body;
 
-    const updatedBlog = await updateBlogService(
+    const updatedBlogObject = {
       id,
       title,
       content,
       img,
       visibility,
-      category
-    );
+      category,
+    };
 
-    if (!updatedBlog) {
-      return res.status(404).json({ error: "Blog post not found" });
-    }
+    const updatedBlog = await updateBlogService(id, updatedBlogObject, req);
 
     res.ourResponse = updatedBlog;
     next();
   } catch (error) {
-    const { userId, category } = req.params;
     const errorMessage = {
       ...error,
       function: "updateBlog",
       errorMessage: "An error occurred while updating the blog post",
-      userId,
-      category,
+      id,
     };
 
     next(errorMessage);
