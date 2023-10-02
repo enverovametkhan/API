@@ -5,17 +5,17 @@ const app = express();
 const port = process.env.PORT || 3000;
 const bodyParser = require("body-parser");
 const { createNamespace } = require("cls-hooked");
-const userAuthNamespace = createNamespace("userAuthNamespace");
+const namespace = createNamespace("req");
 
-function attachRequestContext(req, res, next) {
-  userAuthNamespace.run(() => {
-    userAuthNamespace.set("req", req);
+function contextMiddleware(req, res, next) {
+  namespace.run(() => {
+    namespace.set("req", req);
     next();
   });
 }
 
+app.use(contextMiddleware);
 app.use(bodyParser.json());
-app.use(attachRequestContext);
 
 require("./interceptors/interceptorIn")(app);
 require("./routes/routes")(app);

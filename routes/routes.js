@@ -33,12 +33,12 @@ module.exports = (app) => {
   app.get("/public/blog/category/:category", getBlogsInCategory);
   app.get(
     "/secure/blog/:userId/:category",
-    // authMiddleware,
+    authMiddleware,
     getUserBlogsInCategory
   );
   app.put("/secure/blog/:id", authMiddleware, updateBlog);
-  app.delete("/secure/blog/:id", deleteBlog);
-  app.post("/secure/blog", createBlog);
+  app.delete("/secure/blog/:id", authMiddleware, deleteBlog);
+  app.post("/secure/blog", authMiddleware, createBlog);
 
   // User Routes
   router.post("/api/user/login", loginController);

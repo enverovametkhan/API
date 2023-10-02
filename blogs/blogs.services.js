@@ -1,149 +1,110 @@
 const { dummyBlogs } = require("./blogs.data");
 const { getAccessToUserData } = require("@root/utilities/getUserData");
 
-// function getBlogService(id) {
-//   const blog = dummyBlogs.find((blog) => blog.id === id);
-
-//   if (!blog) {
-//     throw new Error("No blog found");
-//   }
-
-//   blog.comments = [];
-
-//   return blog;
-// }
-// function getBlogService(id) {
-//   const blog = dummyBlogs.find((blog) => blog.id === id);
-
-//   if (!blog) {
-//     const error = new Error("No blog found");
-//     error.function = "getBlogService";
-//     throw error;
-//   }
-
-//   blog.comments = [];
-
-//   return blog;
-// }
 async function getBlogService(id) {
-  try {
-    // TAG:001
-    // Here we extract the data from the req object and now have access to it on the Service level
-    // without passing any parameters to this function, similar to the logic you provided
-    const userData = await getAccessToCustomData();
+  const blog = dummyBlogs.find((blog) => blog.id === id);
 
-    const blog = dummyBlogs.find((blog) => blog.id === id);
-
-    if (!blog) {
-      const error = new Error("No blog found");
-      error.function = "getBlogService";
-      throw error;
-    }
-
-    blog.comments = [];
-
-    const response = {
-      content: "Here is the content for Blog Service",
-      message: "There you go!",
-      userData: {
-        personalisedMessage:
-          "This content is decrypted from AuthMiddleware and accessed in getBlogService",
-        ...userData,
-      },
-      blog,
-    };
-
-    return response;
-  } catch (error) {
+  if (!blog) {
+    const error = new Error("No blog found");
+    error.function = "getBlogService";
     throw error;
   }
+
+  const userData = await getAccessToUserData();
+
+  return {
+    content: "Here is the content for Blog Service",
+    message: "There you go!",
+    userData,
+    blog,
+  };
 }
 
 async function getBlogInCategoryService(category) {
-  const blogs = dummyBlogs.filter((blog) => blog.categories.includes(category));
+  const blogsInCategory = [];
 
-  if (blogs.length === 0) {
-    throw new Error("No blogs found in the category");
+  for (const blog of dummyBlogs) {
+    if (blog.categories.includes(category)) {
+      blogsInCategory.push(blog);
+    }
   }
 
-  return blogs;
+  const userData = await getAccessToUserData();
+
+  return {
+    content: "Here are the blogs in the category",
+    message: "Here you go!",
+    userData,
+    blogs: blogsInCategory,
+  };
 }
 
 async function getUserBlogInCategoryService(userId, category) {
-  if (!userId || !category) {
-    throw new Error("Insufficient information");
-  }
+  const blogsInCategory = dummyBlogs.filter(
+    (blog) => blog.categories.includes(category) && blog.user_id === userId
+  );
 
-  const blogs = [];
-  for (const blog of dummyBlogs) {
-    if (blog.user_id === userId && blog.categories.includes(category)) {
-      blogs.push(blog);
-    }
-  }
+  const userData = await getAccessToUserData();
 
-  if (blogs.length === 0) {
-    throw new Error("No blogs found for the user in the category");
-  }
-
-  return blogs;
+  return {
+    content: "List of blogs successfully loaded",
+    message: "List of blogs successfully loaded",
+    userData,
+    blogs: blogsInCategory,
+  };
 }
 
-async function updateBlogService(id, updatedBlogData) {
-  try {
-    if (!id) {
-      throw new Error("Blog ID is required");
-    }
+async function updateBlogService({
+  id,
+  title,
+  content,
+  image,
+  user_id,
+  categories,
+}) {
+  const blogIndex = dummyBlogs.findIndex((blog) => blog.id === id);
 
-    const index = dummyBlogs.findIndex((blog) => blog.id === id);
-
-    if (index === -1) {
-      throw new Error("Blog not found for updating");
-    }
-
-    const updatedBlog = { ...dummyBlogs[index], ...updatedBlogData };
-    dummyBlogs[index] = updatedBlog;
-
-    const response = {
-      content: "Blog post updated successfully",
-      userData: {
-        customMessage: `Blog post updated by user: ${updatedBlogData.user_id}`,
-        ...updatedBlogData,
-      },
-    };
-
-    return response;
-  } catch (error) {
+  if (blogIndex === -1) {
+    const error = new Error("No blog found");
+    error.function = "updateBlogService";
     throw error;
   }
+
+  dummyBlogs[blogIndex] = {
+    ...dummyBlogs[blogIndex],
+    title,
+    content,
+    image,
+    user_id,
+    categories,
+  };
+
+  const userData = await getAccessToUserData();
+
+  return {
+    content: "Blog post updated successfully",
+    message: "Blog post updated successfully",
+    userData,
+    blog: dummyBlogs[blogIndex],
+  };
 }
 
-// async function updateBlogService(id, updatedBlogData) {
-//   if (!id) {
-//     throw new Error("Blog ID is required");
-//   }
-
-//   const index = dummyBlogs.findIndex((blog) => blog.id === id);
-
-//   if (index === -1) {
-//     throw new Error("Blog not found for updating");
-//   }
-
-//   const updatedBlog = { ...dummyBlogs[index], ...updatedBlogData };
-//   dummyBlogs[index] = updatedBlog;
-
-//   return "Blog post updated successfully";
-// }
-
-function deleteBlogService(id) {
+async function deleteBlogService(id) {
   const index = dummyBlogs.findIndex((blog) => blog.id === id);
 
   if (index === -1) {
-    return null;
+    throw new Error("No blogs found for deletion");
   }
 
   const deletedBlog = dummyBlogs.splice(index, 1)[0];
+  const userData = await getAccessToUserData();
 
-  return deletedBlog;
+  return {
+    content: "Blog deleted successfully",
+    message: "Blog deleted successfully",
+    userData,
+    blog: deletedBlog,
+  };
 }
 
 async function createBlogService({
@@ -162,8 +123,14 @@ async function createBlogService({
   };
 
   dummyBlogs.push(newBlog);
+  const userData = await getAccessToUserData();
 
-  return newBlog;
+  return {
+    content: "Blog created successfully",
+    message: "Blog created successfully",
+    userData,
+    blog: newBlog,
+  };
 }
 
 module.exports = {
