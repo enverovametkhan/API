@@ -14,56 +14,88 @@ const {
   confirmEmailSwap,
 } = require("./users.services");
 
-async function loginController(req, res) {
+async function loginController(req, res, next) {
   try {
     const { email, password } = req.body;
     const user = await login(email, password);
+
     if (user) {
       res.json(user);
+      next();
     } else {
-      res.status(401).json({ message: "Authentication failed" });
+      const error = new Error("Authentication failed");
+      error.status = 401;
+      throw error;
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    const { id } = req.params;
+    const errorMessage = {
+      error: { ...error },
+      function: "loginController",
+      errorMessage: error.message || "Internal Server Error",
+      id,
+    };
+
+    next(errorMessage);
   }
 }
 
-async function signupController(req, res) {
+async function signupController(req, res, next) {
   try {
     const { username, email, password, confirmedPassword } = req.body;
     if (!username || !email || !password || !confirmedPassword) {
-      return res.status(400).json({
-        error: "Username, email, password, and confirmedPassword are required.",
-      });
+      const error = new Error(
+        "Username, email, password, and confirmedPassword are required."
+      );
+      error.status = 400;
+      throw error;
     }
 
     const newUser = await signup(username, email, password, confirmedPassword);
     res.status(201).json(newUser);
+    next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    const errorMessage = {
+      function: "signupController",
+      errorMessage: error.message || "Internal Server Error",
+    };
+
+    next(errorMessage);
   }
 }
 
-async function verifyEmailController(req, res) {
+async function verifyEmailController(req, res, next) {
   try {
     const { hash } = req.params;
     await verifyEmail(hash);
+
     res.json({ message: "Email has been verified" });
+    next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    const errorMessage = {
+      error: { ...error },
+      function: "verifyEmailController",
+      errorMessage: error.message || "Internal Server Error",
+    };
+
+    next(errorMessage);
   }
 }
-async function logoutController(req, res) {
+
+async function logoutController(req, res, next) {
   try {
     const userId = "";
     await logout(userId);
     res.status(200).json({ message: "Logged out successfully" });
+    next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    const errorMessage = {
+      error: { ...error },
+      function: "logoutController",
+      errorMessage: error.message || "Internal Server Error",
+    };
+
+    next(errorMessage);
   }
 }
 

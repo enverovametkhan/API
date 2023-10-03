@@ -15,27 +15,37 @@ async function hashPassword(password) {
 
 async function login(email, password) {
   if (!email) {
-    throw new Error("Email is required");
+    return {
+      message: "Email is required",
+    };
   }
 
   if (!password) {
-    throw new Error("Password is required");
+    return {
+      message: "Password is required",
+    };
   }
 
   const user = dummyUsers.find((user) => user.email === email);
 
   if (!user) {
-    throw new Error("Incorrect login credentials");
+    return {
+      message: "Incorrect login credentials",
+    };
   }
 
   if (user.verifyEmail) {
-    throw new Error("Please verify your email address to continue");
+    return {
+      message: "Please verify your email address to continue",
+    };
   }
 
   const validPassword = await bcrypt.compare(password, user.password);
 
   if (!validPassword) {
-    throw new Error("Incorrect login credentials");
+    return {
+      message: "Incorrect login credentials",
+    };
   }
 
   const userData = {
@@ -50,17 +60,11 @@ async function login(email, password) {
   user.authToken = authToken;
   user.refreshToken = refreshToken;
 
-  const index = dummyUsers.findIndex((user) => user.id === user.id);
-  if (index !== -1) {
-    dummyUsers[index] = user;
-  }
-
   return {
+    message: "Login successful",
     authToken,
     refreshToken,
-    userId: user.id,
-    email: user.email,
-    username: user.username,
+    userData,
   };
 }
 
@@ -92,9 +96,10 @@ async function signup(username, email, password, confirmedPassword) {
 
   newUser.magicLinkToken = await createToken({ user_id: newUser.id }, "300d");
 
-  dummyUsers.push(newUser);
-
-  return newUser;
+  return {
+    message: "Signup successful",
+    newUser,
+  };
 }
 
 async function verifyEmail(hash) {

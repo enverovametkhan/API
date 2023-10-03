@@ -41,10 +41,10 @@ module.exports = (app) => {
   app.post("/secure/blog", authMiddleware, createBlog);
 
   // User Routes
-  router.post("/api/user/login", loginController);
-  router.post("/api/user/signup", signupController);
-  router.get("/api/user/verifyEmail/:hash", verifyEmailController);
-  router.get("/api/user/logout", logoutController);
+  app.post("/api/user/login", loginController);
+  app.post("/api/user/signup", signupController);
+  app.get("/api/user/verifyEmail/:hash", verifyEmailController);
+  app.get("/api/user/logout", authMiddleware, logoutController);
   router.get("/api/user/", getUserController);
   router.put("/api/user/update", updateUserController);
   router.delete("/api/user/delete", deleteUserController);
