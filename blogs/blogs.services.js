@@ -10,12 +10,9 @@ async function getBlogService(id) {
     throw error;
   }
 
-  const userData = await getAccessToUserData();
-
   return {
-    content: "Here is the content for Blog Service",
-    message: "There you go!",
-    userData,
+    message: "Here is the content for Blog Service",
+
     blog,
   };
 }
@@ -29,17 +26,13 @@ async function getBlogInCategoryService(category) {
     }
   }
 
-  const userData = await getAccessToUserData();
-
   return {
-    content: "Here are the blogs in the category",
     message: "Here you go!",
-    userData,
     blogs: blogsInCategory,
   };
 }
 
-async function getUserBlogInCategoryService(userId, category) {
+async function getUserBlogInCategoryService(category) {
   const blogsInCategory = dummyBlogs.filter(
     (blog) => blog.categories.includes(category) && blog.user_id === userId
   );
@@ -47,21 +40,13 @@ async function getUserBlogInCategoryService(userId, category) {
   const userData = await getAccessToUserData();
 
   return {
-    content: "List of blogs successfully loaded",
     message: "List of blogs successfully loaded",
     userData,
     blogs: blogsInCategory,
   };
 }
 
-async function updateBlogService({
-  id,
-  title,
-  content,
-  image,
-  user_id,
-  categories,
-}) {
+async function updateBlogService({ id, title, content, image, categories }) {
   const blogIndex = dummyBlogs.findIndex((blog) => blog.id === id);
 
   if (blogIndex === -1) {
@@ -75,14 +60,12 @@ async function updateBlogService({
     title,
     content,
     image,
-    user_id,
     categories,
   };
 
   const userData = await getAccessToUserData();
 
   return {
-    content: "Blog post updated successfully",
     message: "Blog post updated successfully",
     userData,
     blog: dummyBlogs[blogIndex],
@@ -100,25 +83,17 @@ async function deleteBlogService(id) {
   const userData = await getAccessToUserData();
 
   return {
-    content: "Blog deleted successfully",
     message: "Blog deleted successfully",
     userData,
     blog: deletedBlog,
   };
 }
 
-async function createBlogService({
-  title,
-  content,
-  image,
-  user_id,
-  categories,
-}) {
+async function createBlogService({ title, content, image, categories }) {
   const newBlog = {
     title,
     content,
     image,
-    user_id,
     categories,
   };
 
@@ -126,7 +101,6 @@ async function createBlogService({
   const userData = await getAccessToUserData();
 
   return {
-    content: "Blog created successfully",
     message: "Blog created successfully",
     userData,
     blog: newBlog,

@@ -18,7 +18,7 @@ async function getBlog(req, res, next) {
   } catch (error) {
     let { id } = req.params;
     const errorMessage = {
-      ...error,
+      error: { ...error },
       function: "getBlog",
       errorMessage: `Something went wrong while processing getBlog controller with ID ${id}`,
     };
@@ -73,7 +73,7 @@ async function updateBlog(req, res, next) {
     const { id } = req.params;
     const { title, content, image, user_id, categories } = req.body;
 
-    const updatedBlog = await updateBlogService({
+    const response = await updateBlogService({
       id,
       title,
       content,
@@ -82,7 +82,7 @@ async function updateBlog(req, res, next) {
       categories,
     });
 
-    res.status(200).json(updatedBlog);
+    res.ourResponse = response;
     next();
   } catch (error) {
     const errorMessage = {
@@ -96,13 +96,9 @@ async function updateBlog(req, res, next) {
 async function deleteBlog(req, res, next) {
   try {
     const { id } = req.params;
-    const result = await deleteBlogService(id);
+    const response = await deleteBlogService(id);
 
-    if (result) {
-      res.status(200).json({ message: "Blog deleted successfully" });
-    } else {
-      res.status(404).json({ errorMessage: "No blogs found for deletion" });
-    }
+    res.ourResponse = response;
     next();
   } catch (error) {
     const errorMessage = {
@@ -117,7 +113,7 @@ async function createBlog(req, res, next) {
   try {
     const { title, content, image, user_id, categories } = req.body;
 
-    const newBlog = await createBlogService({
+    const response = await createBlogService({
       title,
       content,
       image,
@@ -125,8 +121,7 @@ async function createBlog(req, res, next) {
       categories,
     });
 
-    res.status(201).json(newBlog);
-
+    res.ourResponse = response;
     next();
   } catch (error) {
     const errorMessage = {
