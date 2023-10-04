@@ -99,79 +99,114 @@ async function logoutController(req, res, next) {
   }
 }
 
-async function getUserController(req, res) {
+async function getUserController(req, res, next) {
   try {
-    const user = await getUser();
-    res.json(user);
+    let response = await getUser();
+    res.send(response);
+    next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    const errorMessage = {
+      error: { ...error },
+      function: "getUserController",
+      errorMessage: error.message || "Internal Server Error",
+    };
+
+    next(errorMessage);
   }
 }
 
-async function deleteUserController(req, res) {
+async function deleteUserController(req, res, next) {
   try {
-    const userId = "";
+    const { userId } = req.params;
     await deleteUser(userId);
-    res.send({ message: "User deleted successfully" });
+    res.json({ message: "User deleted successfully" });
+    next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    const errorMessage = {
+      error: { ...error },
+      function: "deleteUserController",
+      errorMessage: error.message || "Internal Server Error",
+    };
+    next(errorMessage);
   }
 }
 
-async function updateUserController(req, res) {
+async function updateUserController(req, res, next) {
   try {
     const updatedUserData = req.body;
-    const result = await updateUser(updatedUserData);
+    const response = await updateUser(updatedUserData);
 
-    if (!result) {
-      res.status(400).json({ message: "No valid updates provided" });
+    if (!response) {
+      throw new Error("No valid updates provided");
     } else {
-      const statusCode = result.email || result.username ? 200 : 400;
-      res.status(statusCode).json(result);
+      res.json(response);
+      next();
     }
   } catch (error) {
-    const status = error.message === "User not found" ? 404 : 500;
-    res.status(status).json({ message: error.message });
+    const errorMessage = {
+      error: { ...error },
+      function: "updateUserController",
+      errorMessage: error.message,
+    };
+    next(errorMessage);
   }
 }
 
-async function refreshAuthTokenController(req, res) {
+async function refreshAuthTokenController(req, res, next) {
   try {
-    let response = await refreshAuthToken();
+    const response = await refreshAuthToken();
     res.send(response);
+    next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    const errorMessage = {
+      error: { ...error },
+      function: "refreshAuthTokenController",
+      errorMessage: error.message || "Internal Server Error",
+    };
+    next(errorMessage);
   }
 }
 
-async function resetPasswordController(req, res) {
+async function resetPasswordController(req, res, next) {
   try {
-    const { token } = req.body;
+    const { token, email } = req.body;
     console.log("Reset Password - Token:", token);
-    const result = await resetPassword(token);
-    res.status(result.status).json({ message: result.message });
+
+    const userData = await getUser(email);
+
+    checkResetPasswordToken(token);
+
+    const response = await resetPassword(userData);
+
+    res.status(response.status).json({ message: response.message });
+    next();
   } catch (error) {
     console.error(error);
-    res
-      .status(error.message === "User not found" ? 404 : 500)
-      .json({ message: error.message });
+
+    const errorMessage = {
+      error: { ...error },
+      function: "resetPasswordController",
+      errorMessage: error.message,
+    };
+    next(errorMessage);
   }
 }
 
-async function checkResetPasswordTokenController(req, res) {
+async function checkResetPasswordTokenController(req, res, next) {
   try {
     const { token } = req.params;
     console.log("Check Reset Password Token:", token);
     await checkResetPasswordToken(token);
     res.json({ message: "Token is valid" });
+    next();
   } catch (error) {
     console.error(error);
-    res
-      .status(error.message === "Invalid token" ? 400 : 500)
-      .json({ message: error.message });
+    const errorMessage = {
+      error: { ...error },
+      function: "checkResetPasswordTokenController",
+      errorMessage: error.message,
+    };
+    next(errorMessage);
   }
 }
 

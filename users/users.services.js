@@ -5,6 +5,7 @@ const {
   dummyConfirmEmailHash,
 } = require("./users.data");
 const { createToken, decryptToken } = require("@root/utilities/jwt");
+const { getAccessToUserData } = require("@root/utilities/getUserData");
 
 const saltRounds = 10;
 let jwtToken =
@@ -126,26 +127,37 @@ async function verifyEmail(hash) {
 }
 
 async function logout() {
-  let userData = await decryptToken(jwtToken);
-  console.log(userData);
-  const userIndex = dummyUsers.findIndex((user) => user.id === userData.userId);
+  try {
+    const userData = await getAccessToUserData();
+    console.log(userData);
 
-  if (userIndex === -1) {
-    throw new Error("User not found");
+    if (!userData || !userData.userId) {
+      throw new Error("Invalid user data");
+    }
+
+    const userIndex = dummyUsers.findIndex(
+      (user) => user.id === userData.userId
+    );
+
+    if (userIndex === -1) {
+      throw new Error("User not found");
+    }
+
+    const user = dummyUsers[userIndex];
+
+    user.authToken = "";
+    user.refreshToken = "";
+
+    dummyUsers[userIndex] = user;
+
+    return { message: "User logged out successfully", userData };
+  } catch (error) {
+    throw error;
   }
-
-  const user = dummyUsers[userIndex];
-
-  user.authToken = "";
-  user.refreshToken = "";
-
-  dummyUsers[userIndex] = user;
-
-  return "User logged out successfully";
 }
 
 async function getUser() {
-  const userData = await decryptToken(jwtToken);
+  const userData = await getAccessToUserData();
 
   const user = dummyUsers.find((user) => user.id === userData.userId);
 
@@ -154,14 +166,13 @@ async function getUser() {
   }
 
   return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
+    message: "User data retrieved successfully",
+    userData,
   };
 }
 
 async function deleteUser() {
-  const userData = await decryptToken(jwtToken);
+  const userData = await getAccessToUserData();
   const userIndex = dummyUsers.findIndex((user) => user.id === userData.userId);
 
   if (userIndex === -1) {
@@ -172,11 +183,14 @@ async function deleteUser() {
   user.deletedAt = Date.now();
   dummyUsers.splice(userIndex, 1);
 
-  return "User deleted successfully";
+  return {
+    message: "User deleted successfully",
+    userData,
+  };
 }
 
 async function updateUser(updatedUserData) {
-  let userData = await decryptToken(jwtToken);
+  const userData = await getAccessToUserData();
   const userIndex = dummyUsers.findIndex((user) => user.id === userData.userId);
 
   if (userIndex === -1) {
@@ -200,21 +214,14 @@ async function updateUser(updatedUserData) {
   user.updatedAt = Date.now();
   dummyUsers[userIndex] = user;
 
-  const response = {};
-
-  if (updatedUserData.email) {
-    response.email = "Updated successfully";
-  }
-
-  if (updatedUserData.username) {
-    response.username = "Updated successfully";
-  }
-
-  return response;
+  return {
+    message: "User updated successfully",
+    userData: user,
+  };
 }
 
 async function refreshAuthToken() {
-  let userData = await decryptToken(jwtToken);
+  const userData = await getAccessToUserData();
   const index = dummyUsers.findIndex((user) => user.id === userData.userId);
 
   if (index === -1) {
@@ -238,19 +245,24 @@ async function refreshAuthToken() {
   dummyUsers[index] = user;
 
   return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
+    ...userData,
     authToken: user.authToken,
     refreshToken: user.refreshToken,
+    message: "Token refreshed successfully",
   };
 }
 
 async function resetPassword() {
-  const userData = await decryptToken(jwtToken);
+  const user = dummyUsers.find((user) => user.email === email);
+
+  if (!user) {
+    throw new Error("User with this email does not exist");
+  }
+
+  let jwtToken = createToken({ user_id: user.id }, "300d");
 
   const existResetPasswordHash = dummyResetPasswordHash.find(
-    (each) => each.user_id === userData.user_id
+    (each) => each.user_id === user.id
   );
 
   if (existResetPasswordHash) {
@@ -263,7 +275,7 @@ async function resetPassword() {
 
   const newResetPasswordHash = {
     id: "",
-    user_id: userData.user_id,
+    user_id: user.id,
     token: jwtToken,
     expiresAt: new Date(),
     createdAt: new Date(),
@@ -278,7 +290,7 @@ async function resetPassword() {
   };
 }
 
-function checkResetPasswordToken(token) {
+async function checkResetPasswordToken(token) {
   console.log(token);
   const existResetPasswordHash = dummyResetPasswordHash.find(
     (each) => each.token === token
@@ -290,6 +302,7 @@ function checkResetPasswordToken(token) {
 
   return {
     status: 200,
+    message: "Token is valid",
   };
 }
 

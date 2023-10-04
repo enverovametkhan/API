@@ -45,12 +45,16 @@ module.exports = (app) => {
   app.post("/api/user/signup", signupController);
   app.get("/api/user/verifyEmail/:hash", verifyEmailController);
   app.get("/api/user/logout", authMiddleware, logoutController);
-  router.get("/api/user/", getUserController);
-  router.put("/api/user/update", updateUserController);
-  router.delete("/api/user/delete", deleteUserController);
-  router.get("/api/user/refreshAuthToken", refreshAuthTokenController);
-  router.post("/api/user/resetPassword", resetPasswordController);
-  router.get(
+  app.get("/api/user", authMiddleware, getUserController);
+  app.delete("/api/user/delete", authMiddleware, deleteUserController);
+  app.put("/api/user/update", authMiddleware, updateUserController);
+  app.get(
+    "/api/user/refreshAuthToken",
+    authMiddleware,
+    refreshAuthTokenController
+  );
+  app.post("/api/user/resetPassword/:token", resetPasswordController);
+  app.get(
     "/api/user/checkResetPasswordToken/:token",
     checkResetPasswordTokenController
   );
