@@ -53,12 +53,12 @@ module.exports = (app) => {
     authMiddleware,
     refreshAuthTokenController
   );
-  app.post("/api/user/resetPassword/:token", resetPasswordController);
+  app.get("/api/user/resetPassword/:email", resetPasswordController);
   app.get(
     "/api/user/checkResetPasswordToken/:token",
     checkResetPasswordTokenController
   );
-  router.put("/api/user/changePassword", changePasswordController);
+  app.put("/api/user/changePassword", changePasswordController);
   // router.post("/api/user/swapEmail/", swapEmailController);
-  router.get("/api/user/confirmEmailSwap/:hash", confirmEmailSwapController);
+  app.get("/api/user/confirmEmailSwap/:hash", confirmEmailSwapController);
 };

@@ -180,6 +180,8 @@ async function deleteUser() {
   }
 
   const user = dummyUsers[userIndex];
+  user.password = "";
+  user.username = "";
   user.deletedAt = Date.now();
   dummyUsers.splice(userIndex, 1);
 
@@ -252,14 +254,12 @@ async function refreshAuthToken() {
   };
 }
 
-async function resetPassword() {
+async function resetPassword(email) {
   const user = dummyUsers.find((user) => user.email === email);
 
   if (!user) {
     throw new Error("User with this email does not exist");
   }
-
-  let jwtToken = createToken({ user_id: user.id }, "300d");
 
   const existResetPasswordHash = dummyResetPasswordHash.find(
     (each) => each.user_id === user.id
@@ -276,7 +276,7 @@ async function resetPassword() {
   const newResetPasswordHash = {
     id: "",
     user_id: user.id,
-    token: jwtToken,
+
     expiresAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -344,7 +344,7 @@ async function changePassword(token, password, confirmedPassword) {
 
 async function swapEmail(newEmail) {
   console.log(newEmail);
-  const userData = await decryptToken(jwtToken);
+  const userData = await getAccessToUserData();
   const user = dummyUsers.find((eachUser) => eachUser.id === userData.user_id);
 
   if (!user) {

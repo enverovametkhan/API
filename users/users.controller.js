@@ -169,14 +169,9 @@ async function refreshAuthTokenController(req, res, next) {
 
 async function resetPasswordController(req, res, next) {
   try {
-    const { token, email } = req.body;
-    console.log("Reset Password - Token:", token);
+    const { email } = req.params;
 
-    const userData = await getUser(email);
-
-    checkResetPasswordToken(token);
-
-    const response = await resetPassword(userData);
+    const response = await resetPassword(email);
 
     res.status(response.status).json({ message: response.message });
     next();
@@ -210,14 +205,23 @@ async function checkResetPasswordTokenController(req, res, next) {
   }
 }
 
-async function changePasswordController(req, res) {
+async function changePasswordController(req, res, next) {
   try {
     const { token, password, confirmedPassword } = req.body;
+
     await changePassword(token, password, confirmedPassword);
+
     res.json({ message: "Password changed successfully" });
+    next();
   } catch (error) {
     console.error(error);
-    res.status(400).json({ message: error.message });
+
+    const errorMessage = {
+      error: { ...error },
+      function: "changePasswordController",
+      errorMessage: error.message,
+    };
+    next(errorMessage);
   }
 }
 
@@ -234,16 +238,24 @@ async function changePasswordController(req, res) {
 //   }
 // }
 
-async function confirmEmailSwapController(req, res) {
+async function confirmEmailSwapController(req, res, next) {
   try {
     const { hash } = req.params;
+
     await confirmEmailSwap(hash);
+
     res.json({ message: "Email swapped successfully" });
+    next();
   } catch (error) {
     console.error(error);
-    res
-      .status(error.message === "Email swapping error" ? 400 : 500)
-      .json({ message: error.message });
+
+    const errorMessage = {
+      error: { ...error },
+      function: "confirmEmailSwapController",
+      errorMessage: error.message,
+    };
+
+    next(errorMessage);
   }
 }
 
